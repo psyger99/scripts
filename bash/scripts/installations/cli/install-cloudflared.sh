@@ -2,60 +2,36 @@
 
 source ~/colors/colors.sh
 
-# Cloudflared Installation Script
-#
-# === USER CONFIGURATION ===
-# Optional: Folder to store credentials/config
-D_DRIVE_PATH="/mnt/d/n8n/volumes/cloudflared"
+# Cloudflared installation and login script
+echo "--- 1. Installing cloudflared via Cloudflare APT Repository ---"
 
-# =====================================================
-# 1️⃣ Download and install cloudflared
-# =====================================================
-echo "Downloading latest cloudflared..."
-curl -LO https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+# Install necessary dependencies for adding a new repository
+sudo apt update
+sudo apt install -y curl lsb-release
+
+# Add Cloudflare's official GPG key
+echo "Adding Cloudflare's GPG key..."
+curl -fsSL https://pkg.cloudflare.com/cloudflare-release-latest.deb | sudo dpkg -i -
+
+echo "Updating package list..."
+sudo apt update
 
 echo "Installing cloudflared..."
-sudo dpkg -i cloudflared-linux-amd64.deb
-sudo apt-get install -f -y
+sudo apt install -y cloudflared
 
-# Verify installation
-cloudflared --version || {
-  echo "cloudflared installation failed"
+# Verify installation.
+if command -v cloudflared &>/dev/null; then
+  echo "✅ cloudflared installed successfully: $(cloudflared --version)"
+else
+  echo "❌ ERROR: cloudflared installation failed."
   exit 1
-}
+fi
 
-# =====================================================
-# 2️⃣ Authenticate Cloudflare account
-# =====================================================
-echo "Logging into Cloudflare..."
+echo "--- 2. Authenticating Cloudflare Account ---"
+
+# Open browser for Cloudflare login and authentication.
+echo "Running 'cloudflared login'. Please follow the browser instructions in the browser window that opens."
 cloudflared login
 
-# =====================================================
-# 3️⃣ Create a new tunnel
-# =====================================================
-read -p "Enter a name for your new tunnel: " TUNNEL_NAME
-TUNNEL_UUID=$(cloudflared tunnel create "$TUNNEL_NAME" | grep -oP 'ID:\s+\K[0-9a-f-]+')
-
-if [ -z "$TUNNEL_UUID" ]; then
-  echo "Failed to create tunnel. Exiting."
-  exit 1
-fi
-
-echo "Tunnel created with UUID: $TUNNEL_UUID"
-
-# =====================================================
-# 4️⃣ Copy credentials JSON to external folder (optional)
-# =====================================================
-mkdir -p "$D_DRIVE_PATH"
-CREDENTIALS_FILE="$HOME/.cloudflared/$TUNNEL_UUID.json"
-
-if [ ! -f "$CREDENTIALS_FILE" ]; then
-  echo "Credentials file not found at $CREDENTIALS_FILE"
-  exit 1
-fi
-
-cp "$CREDENTIALS_FILE" "$D_DRIVE_PATH/"
-
-echo "✅ cloudflared installed, authenticated, and tunnel created!"
-echo "Tunnel UUID: $TUNNEL_UUID"
-echo "Credentials copied to: $D_DRIVE_PATH/"
+# Setup complete.
+echo "cloudflared is installed and authenticated."
