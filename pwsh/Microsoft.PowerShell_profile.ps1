@@ -8,7 +8,5 @@
 oh-my-posh init pwsh --config 'C:\Users\rainer\Documents\PowerShell\my_theme.omp.json' | Invoke-Expression
 Invoke-Expression (& { (zoxide init powershell | Out-String) })
 
-
-
 # IMPORT MODULES
 Import-Module Terminal-Icons
